@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  java-app: 
+    build: .
+    depends_on:
+      sql-db:
+        condition: service_healthy
+    # ports:
+    #   - 8080:8080
+  
+
+  sql-db:
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=secretpass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./lavagna.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-psecretpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  nginx:
+    image: nginx:stable
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-conf/conf.d:/etc/nginx/conf.d
+      - ./src/main/webapp/:/usr/share/nginx/html:rw
+    depends_on:
+      - java-app
+
+volumes:
+  db_data:
