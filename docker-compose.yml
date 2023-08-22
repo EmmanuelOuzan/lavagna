@@ -6,9 +6,11 @@ services:
     depends_on:
       sql-db:
         condition: service_healthy
-    # ports:
-    #   - 8080:8080
-  
+    networks:
+      - frontend
+      - backend
+    volumes:
+      - lavagna_webapp:/app/lavagna
 
   sql-db:
     image: mysql:5.7
@@ -22,15 +24,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
+
+
   nginx:
     image: nginx:stable
     ports:
       - "80:80"
+      - "8081:8081"
     volumes:
       - ./nginx-conf/conf.d:/etc/nginx/conf.d
-      - ./src/main/webapp/:/usr/share/nginx/html:rw
+      - lavagna_webapp:/usr/share/nginx/html:rw
     depends_on:
       - java-app
+    networks:
+      - frontend
 
 volumes:
   db_data:
+  lavagna_webapp:
+
+networks:
+  frontend:
+  backend:
